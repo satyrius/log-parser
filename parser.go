@@ -9,12 +9,14 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 )
 
 var debug *bool
 var format *string
 var nginxConfig *string
 var nginxFormat *string
+var aggField *string
 var groupBy *string
 var groupByReqexp *string
 
@@ -25,6 +27,8 @@ func init() {
 		"Nginx config to look for 'log_format' directive. You also should specify --nginx-format")
 	nginxFormat = goopt.String([]string{"--nginx-format"}, "",
 		"Name of nginx 'log_format', should be passed with --nginx option")
+	aggField = goopt.String([]string{"-a", "--aggregate"}, "request_time",
+		"Nginx access log variable to aggregate")
 	groupBy = goopt.String([]string{"-g", "--group-by"}, "request",
 		"Nginx access log variable to group by")
 	groupByReqexp = goopt.String([]string{"-r", "--regexp"}, "",
@@ -78,7 +82,24 @@ func main() {
 		logs = append(logs, os.Stdin)
 	}
 
-	st := stat.NewStat(*groupBy, *groupByReqexp)
+	aggregator := func(i *stat.Item, entry *gonx.Entry) (val float64, err error) {
+		if strVal, ok := (*entry)[*aggField]; ok {
+			v, err := strconv.ParseFloat(strVal, 64)
+			if err != nil {
+				return 0, err
+			}
+			if i.Count == 1 {
+				val = v
+			} else {
+				val = (i.AggValue*float64(i.Count-1) + v) / float64(i.Count)
+			}
+		} else {
+			err = fmt.Errorf("Invalid entry data")
+		}
+		return
+	}
+	st := stat.NewStat(aggregator, *groupBy, *groupByReqexp)
+
 	for _, file := range logs {
 		st.AddLog(file.Name())
 		reader, err := getReader(file)
@@ -106,6 +127,6 @@ func main() {
 	fmt.Printf("Gratz! You've parsed %v log entries, it took %v\n", st.EntriesParsed, st.Stop())
 	sort.Sort(st)
 	for _, item := range st.Data {
-		fmt.Printf("%v %v\n", item.Count, item.Name)
+		fmt.Printf("%7.3f %6d %v\n", item.AggValue, item.Count, item.Name)
 	}
 }

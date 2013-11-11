@@ -7,17 +7,30 @@ import (
 	"time"
 )
 
+type Aggregator func(item *Item, entry *gonx.Entry) (float64, error)
+
 type Item struct {
-	Name  string
-	Count int
+	Name     string
+	Count    int
+	AggValue float64
+	agg      Aggregator
 }
 
-func NewItem(name string) *Item {
-	return &Item{Name: name, Count: 0}
+func NewItem(name string, agg Aggregator) *Item {
+	item := &Item{Name: name, Count: 0, AggValue: 0, agg: agg}
+	return item
 }
 
-func (i *Item) Update(entry *gonx.Entry) {
+func (i *Item) Update(entry *gonx.Entry) (err error) {
 	i.Count++
+	if i.agg != nil {
+		val, err := i.agg(i, entry)
+		if err != nil {
+			return err
+		}
+		i.AggValue = val
+	}
+	return
 }
 
 type Stat struct {
@@ -28,10 +41,11 @@ type Stat struct {
 	GroupByRegexp *regexp.Regexp
 	EntriesParsed int
 	Data          []*Item
+	agg           Aggregator
 	index         map[string]int
 }
 
-func NewStat(groupBy string, regexpPattern string) *Stat {
+func NewStat(agg Aggregator, groupBy string, regexpPattern string) *Stat {
 	var re *regexp.Regexp
 	if regexpPattern != "" {
 		re = regexp.MustCompile(regexpPattern)
@@ -41,6 +55,7 @@ func NewStat(groupBy string, regexpPattern string) *Stat {
 		StartedAt:     time.Now(),
 		GroupBy:       groupBy,
 		GroupByRegexp: re,
+		agg:           agg,
 		index:         make(map[string]int),
 	}
 }
@@ -69,15 +84,20 @@ func (s *Stat) Add(record *gonx.Entry) (err error) {
 
 	// Update existing stat item or create new one
 	if id, ok := s.index[value]; ok {
-		s.Data[id].Update(record)
+		err = s.Data[id].Update(record)
 	} else {
-		item := NewItem(value)
-		item.Update(record)
-		s.Data = append(s.Data, item)
-		s.index[value] = s.Len() - 1
+		item := NewItem(value, s.agg)
+		err = item.Update(record)
+		if err == nil {
+			s.Data = append(s.Data, item)
+			s.index[value] = s.Len() - 1
+		}
 	}
 
-	s.EntriesParsed++
+	if err == nil {
+		s.EntriesParsed++
+	}
+
 	return
 }
 

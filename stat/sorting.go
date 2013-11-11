@@ -5,7 +5,11 @@ func (s *Stat) Len() int {
 }
 
 func (s *Stat) Less(i, j int) bool {
-	return s.Data[i].Count > s.Data[j].Count
+	if s.agg == nil {
+		return s.Data[i].Count > s.Data[j].Count
+	} else {
+		return s.Data[i].AggValue > s.Data[j].AggValue
+	}
 }
 
 func (s *Stat) Swap(i, j int) {
