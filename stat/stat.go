@@ -7,6 +7,15 @@ import (
 	"time"
 )
 
+type Item struct {
+	Name  string
+	Count int
+}
+
+func NewItem(name string) *Item {
+	return &Item{Name: name, Count: 1}
+}
+
 type Stat struct {
 	StartedAt     time.Time
 	ElapsedTime   time.Duration
@@ -14,7 +23,7 @@ type Stat struct {
 	GroupBy       string
 	GroupByRegexp *regexp.Regexp
 	EntriesParsed int
-	Data          map[string]int
+	Data          map[string]*Item
 }
 
 func NewStat(groupBy string, regexpPattern string) *Stat {
@@ -27,7 +36,7 @@ func NewStat(groupBy string, regexpPattern string) *Stat {
 		StartedAt:     time.Now(),
 		GroupBy:       groupBy,
 		GroupByRegexp: re,
-		Data:          make(map[string]int),
+		Data:          make(map[string]*Item),
 	}
 }
 
@@ -46,10 +55,10 @@ func (s *Stat) Add(record *gonx.Entry) (err error) {
 		value = submatch[len(submatch)-1]
 	}
 
-	if _, ok := s.Data[value]; ok {
-		s.Data[value]++
+	if item, ok := s.Data[value]; ok {
+		item.Count++
 	} else {
-		s.Data[value] = 1
+		s.Data[value] = NewItem(value)
 	}
 
 	s.EntriesParsed++

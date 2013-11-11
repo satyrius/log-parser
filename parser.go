@@ -103,7 +103,7 @@ func main() {
 		}
 	}
 	fmt.Printf("Gratz! You've parsed %v log entries, it took %v\n", st.EntriesParsed, st.Stop())
-	for req, count := range st.Data {
-		fmt.Printf("%v %v\n", count, req)
+	for req, item := range st.Data {
+		fmt.Printf("%v %v\n", item.Count, req)
 	}
 }
