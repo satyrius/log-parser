@@ -1,4 +1,5 @@
 gom 'github.com/satyrius/gonx'
+gom 'github.com/droundy/goopt'
 
 # Developer tools
 gom 'github.com/nsf/gocode'
