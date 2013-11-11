@@ -1,13 +1,13 @@
 package main
 
 import (
+	"./stat"
 	"fmt"
 	"github.com/droundy/goopt"
 	"github.com/satyrius/gonx"
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 var debug *bool
@@ -59,7 +59,7 @@ func getReader(file io.Reader) (reader *gonx.Reader, err error) {
 func main() {
 	goopt.Parse(nil)
 
-	var logs []io.Reader
+	var logs []*os.File
 	if len(goopt.Args) != 0 {
 		fmt.Println("We are going to parse those files:")
 		for _, log := range goopt.Args {
@@ -77,9 +77,9 @@ func main() {
 		logs = append(logs, os.Stdin)
 	}
 
-	parsed := 0
-	start := time.Now()
+	st := stat.NewStat(*groupBy, *groupByReqexp)
 	for _, file := range logs {
+		st.AddLog(file.Name())
 		reader, err := getReader(file)
 		if err != nil {
 			panic(err)
@@ -91,15 +91,17 @@ func main() {
 			} else if err != nil {
 				panic(err)
 			}
-			parsed++
 			if *debug {
 				fmt.Println("==============================")
 				for name, value := range record {
 					fmt.Printf("LR $%v = '%v'\n", name, value)
 				}
 			}
+			st.Add(&record)
 		}
 	}
-	elapsed := time.Since(start)
-	fmt.Printf("Gratz! You've parsed %v log entries, it took %v\n", parsed, elapsed)
+	fmt.Printf("Gratz! You've parsed %v log entries, it took %v\n", st.EntriesParsed, st.Stop())
+	for req, count := range st.Data {
+		fmt.Printf("%v %v\n", count, req)
+	}
 }
