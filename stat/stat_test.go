@@ -44,3 +44,11 @@ func TestAdd(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, counter, 2)
 }
+
+func TestAddInvalid(t *testing.T) {
+	stat := NewStat("request", "")
+	entry := &gonx.Entry{"foo": "bar"}
+	assert.Error(t, stat.Add(entry))
+	assert.Equal(t, stat.EntriesParsed, 0)
+	assert.Equal(t, len(stat.Data), 0)
+}

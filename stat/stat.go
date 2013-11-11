@@ -1,6 +1,7 @@
 package stat
 
 import (
+	"fmt"
 	"github.com/satyrius/gonx"
 	"regexp"
 	"time"
@@ -31,12 +32,17 @@ func NewStat(groupBy string, regexpPattern string) *Stat {
 }
 
 func (s *Stat) Add(record *gonx.Entry) (err error) {
-	s.EntriesParsed++
-	value := (*record)[s.GroupBy]
+	value, ok := (*record)[s.GroupBy]
+	if !ok {
+		return fmt.Errorf("Field '%v' does not found in record %+v", s.GroupBy, *record)
+	}
+
 	if _, ok := s.Data[value]; ok {
 		s.Data[value]++
 	} else {
 		s.Data[value] = 1
 	}
+
+	s.EntriesParsed++
 	return
 }
