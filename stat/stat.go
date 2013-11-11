@@ -50,3 +50,7 @@ func (s *Stat) Add(record *gonx.Entry) (err error) {
 func (s *Stat) AddLog(file string) {
 	s.Logs = append(s.Logs, file)
 }
+
+func (s *Stat) Stop() {
+	s.ElapsedTime = time.Since(s.StartedAt)
+}

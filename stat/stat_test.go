@@ -8,13 +8,20 @@ import (
 )
 
 func TestConstructor(t *testing.T) {
-	start := time.Now()
 	stat := NewStat("request", "")
 	assert.Equal(t, stat.EntriesParsed, 0)
+	assert.Equal(t, stat.GroupBy, "request")
+}
+
+func TestTiming(t *testing.T) {
+	start := time.Now()
+	stat := NewStat("request", "")
 	assert.WithinDuration(t, start, stat.StartedAt, time.Duration(time.Millisecond),
 		"Constructor should setup StartedAt")
-	assert.Equal(t, stat.GroupBy, "request")
 	assert.Empty(t, stat.Logs)
+	assert.Equal(t, stat.ElapsedTime, 0)
+	stat.Stop()
+	assert.NotEqual(t, stat.ElapsedTime, 0)
 }
 
 func TestEmptyRegexp(t *testing.T) {
