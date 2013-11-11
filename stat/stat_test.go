@@ -39,19 +39,19 @@ func TestAdd(t *testing.T) {
 
 	assert.NoError(t, stat.Add(entry))
 	assert.Equal(t, stat.EntriesParsed, 1)
-	item, ok := stat.Data[request]
-	assert.True(t, ok)
+	item := stat.Get(request)
 	assert.NotNil(t, item)
 	assert.Equal(t, item.Name, request)
 	assert.Equal(t, item.Count, 1)
+	assert.Equal(t, stat.Len(), 1)
 
 	assert.NoError(t, stat.Add(entry))
 	assert.Equal(t, stat.EntriesParsed, 2)
-	item, ok = stat.Data[request]
-	assert.True(t, ok)
+	item = stat.Get(request)
 	assert.NotNil(t, item)
 	assert.Equal(t, item.Name, request)
 	assert.Equal(t, item.Count, 2)
+	assert.Equal(t, stat.Len(), 1)
 }
 
 func TestAddInvalid(t *testing.T) {
@@ -59,7 +59,7 @@ func TestAddInvalid(t *testing.T) {
 	entry := &gonx.Entry{"foo": "bar"}
 	assert.Error(t, stat.Add(entry))
 	assert.Equal(t, stat.EntriesParsed, 0)
-	assert.Equal(t, len(stat.Data), 0)
+	assert.Equal(t, stat.Len(), 0)
 }
 
 func TestEmptyRegexp(t *testing.T) {
@@ -82,13 +82,11 @@ func TestGroupByRegexp(t *testing.T) {
 	assert.NoError(t, stat.Add(entry))
 	assert.Equal(t, stat.EntriesParsed, 1)
 
-	item, ok := stat.Data[request]
-	assert.False(t, ok)
+	item := stat.Get(request)
 	assert.Nil(t, item)
 
 	// Uri should be used as data key because we have regexp to extract it
-	item, ok = stat.Data[uri]
-	assert.True(t, ok)
+	item = stat.Get(uri)
 	assert.NotNil(t, item)
 	assert.Equal(t, item.Name, uri)
 	assert.Equal(t, item.Count, 1)
@@ -111,13 +109,11 @@ func TestNoSubmatchRegexp(t *testing.T) {
 	assert.NoError(t, stat.Add(entry))
 	assert.Equal(t, stat.EntriesParsed, 1)
 
-	item, ok := stat.Data[request]
-	assert.False(t, ok)
+	item := stat.Get(request)
 	assert.Nil(t, item)
 
 	// Request method was used for grouping
-	item, ok = stat.Data["GET"]
-	assert.True(t, ok)
+	item = stat.Get("GET")
 	assert.NotNil(t, item)
 	assert.Equal(t, item.Name, "GET")
 	assert.Equal(t, item.Count, 1)

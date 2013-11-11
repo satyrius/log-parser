@@ -23,7 +23,8 @@ type Stat struct {
 	GroupBy       string
 	GroupByRegexp *regexp.Regexp
 	EntriesParsed int
-	Data          map[string]*Item
+	Data          []*Item
+	index         map[string]int
 }
 
 func NewStat(groupBy string, regexpPattern string) *Stat {
@@ -36,8 +37,15 @@ func NewStat(groupBy string, regexpPattern string) *Stat {
 		StartedAt:     time.Now(),
 		GroupBy:       groupBy,
 		GroupByRegexp: re,
-		Data:          make(map[string]*Item),
+		index:         make(map[string]int),
 	}
+}
+
+func (s *Stat) Get(name string) *Item {
+	if id, ok := s.index[name]; ok {
+		return s.Data[id]
+	}
+	return nil
 }
 
 func (s *Stat) Add(record *gonx.Entry) (err error) {
@@ -55,10 +63,11 @@ func (s *Stat) Add(record *gonx.Entry) (err error) {
 		value = submatch[len(submatch)-1]
 	}
 
-	if item, ok := s.Data[value]; ok {
-		item.Count++
+	if id, ok := s.index[value]; ok {
+		s.Data[id].Count++
 	} else {
-		s.Data[value] = NewItem(value)
+		s.Data = append(s.Data, NewItem(value))
+		s.index[value] = s.Len() - 1
 	}
 
 	s.EntriesParsed++

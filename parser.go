@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 var debug *bool
@@ -103,7 +104,8 @@ func main() {
 		}
 	}
 	fmt.Printf("Gratz! You've parsed %v log entries, it took %v\n", st.EntriesParsed, st.Stop())
-	for req, item := range st.Data {
-		fmt.Printf("%v %v\n", item.Count, req)
+	sort.Sort(st)
+	for _, item := range st.Data {
+		fmt.Printf("%v %v\n", item.Count, item.Name)
 	}
 }
