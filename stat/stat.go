@@ -37,6 +37,15 @@ func (s *Stat) Add(record *gonx.Entry) (err error) {
 		return fmt.Errorf("Field '%v' does not found in record %+v", s.GroupBy, *record)
 	}
 
+	if s.GroupByRegexp != nil {
+		submatch := s.GroupByRegexp.FindStringSubmatch(value)
+		if submatch == nil {
+			return fmt.Errorf("Entry's '%v' value '%v' does not match Regexp '%v'",
+				s.GroupBy, value, s.GroupByRegexp)
+		}
+		value = submatch[len(submatch)-1]
+	}
+
 	if _, ok := s.Data[value]; ok {
 		s.Data[value]++
 	} else {
