@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 var debug *bool
@@ -76,6 +77,8 @@ func main() {
 		logs = append(logs, os.Stdin)
 	}
 
+	parsed := 0
+	start := time.Now()
 	for _, file := range logs {
 		reader, err := getReader(file)
 		if err != nil {
@@ -88,6 +91,7 @@ func main() {
 			} else if err != nil {
 				panic(err)
 			}
+			parsed++
 			if *debug {
 				fmt.Println("==============================")
 				for name, value := range record {
@@ -96,4 +100,6 @@ func main() {
 			}
 		}
 	}
+	elapsed := time.Since(start)
+	fmt.Printf("Gratz! You've parsed %v log entries, it took %v\n", parsed, elapsed)
 }
