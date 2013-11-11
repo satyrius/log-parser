@@ -13,7 +13,11 @@ type Item struct {
 }
 
 func NewItem(name string) *Item {
-	return &Item{Name: name, Count: 1}
+	return &Item{Name: name, Count: 0}
+}
+
+func (i *Item) Update(entry *gonx.Entry) {
+	i.Count++
 }
 
 type Stat struct {
@@ -63,10 +67,13 @@ func (s *Stat) Add(record *gonx.Entry) (err error) {
 		value = submatch[len(submatch)-1]
 	}
 
+	// Update existing stat item or create new one
 	if id, ok := s.index[value]; ok {
-		s.Data[id].Count++
+		s.Data[id].Update(record)
 	} else {
-		s.Data = append(s.Data, NewItem(value))
+		item := NewItem(value)
+		item.Update(record)
+		s.Data = append(s.Data, item)
 		s.index[value] = s.Len() - 1
 	}
 
