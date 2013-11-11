@@ -51,6 +51,7 @@ func (s *Stat) AddLog(file string) {
 	s.Logs = append(s.Logs, file)
 }
 
-func (s *Stat) Stop() {
+func (s *Stat) Stop() time.Duration {
 	s.ElapsedTime = time.Since(s.StartedAt)
+	return s.ElapsedTime
 }

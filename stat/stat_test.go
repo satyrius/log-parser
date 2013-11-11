@@ -19,8 +19,9 @@ func TestTiming(t *testing.T) {
 	assert.WithinDuration(t, start, stat.StartedAt, time.Duration(time.Millisecond),
 		"Constructor should setup StartedAt")
 	assert.Equal(t, stat.ElapsedTime, 0)
-	stat.Stop()
+	elapsed := stat.Stop()
 	assert.NotEqual(t, stat.ElapsedTime, 0)
+	assert.NotEqual(t, stat.ElapsedTime, elapsed)
 }
 
 func TestEmptyRegexp(t *testing.T) {
