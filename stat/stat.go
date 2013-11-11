@@ -43,27 +43,36 @@ func (s *Stat) Get(name string) *Item {
 	return nil
 }
 
-func (s *Stat) Add(record *gonx.Entry) (err error) {
-	value, ok := (*record)[s.GroupBy]
+func (s *Stat) GetGroupByValue(entry *gonx.Entry) (value string, err error) {
+	value, ok := (*entry)[s.GroupBy]
 	if !ok {
-		return fmt.Errorf("Field '%v' does not found in record %+v", s.GroupBy, *record)
+		err = fmt.Errorf("Field '%v' does not found in record %+v", s.GroupBy, *entry)
+		return
 	}
-
 	if s.GroupByRegexp != nil {
 		submatch := s.GroupByRegexp.FindStringSubmatch(value)
 		if submatch == nil {
-			return fmt.Errorf("Entry's '%v' value '%v' does not match Regexp '%v'",
+			err = fmt.Errorf("Entry's '%v' value '%v' does not match Regexp '%v'",
 				s.GroupBy, value, s.GroupByRegexp)
+			return
 		}
 		value = submatch[len(submatch)-1]
+	}
+	return
+}
+
+func (s *Stat) Add(entry *gonx.Entry) (err error) {
+	value, err := s.GetGroupByValue(entry)
+	if err != nil {
+		return
 	}
 
 	// Update existing stat item or create new one
 	if id, ok := s.index[value]; ok {
-		err = s.Data[id].Update(record)
+		err = s.Data[id].Update(entry)
 	} else {
 		item := NewItem(value, s.agg)
-		err = item.Update(record)
+		err = item.Update(entry)
 		if err == nil {
 			s.Data = append(s.Data, item)
 			s.index[value] = s.Len() - 1

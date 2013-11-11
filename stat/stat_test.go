@@ -37,6 +37,12 @@ func TestAdd(t *testing.T) {
 	request := "GET /foo/bar"
 	entry := &gonx.Entry{"request": request}
 
+	// Use whole GroupBy variable value, because there is
+	// no GroupByRegexp specified for Stat
+	value, err := stat.GetGroupByValue(entry)
+	assert.NoError(t, err)
+	assert.Equal(t, value, request)
+
 	assert.NoError(t, stat.Add(entry))
 	assert.Equal(t, stat.EntriesParsed, 1)
 	item := stat.Get(request)
@@ -71,25 +77,15 @@ func TestRegexp(t *testing.T) {
 	exp := `^\w+\s+(\S+)(?:\?|$)`
 	stat := NewStat(nil, "request", exp)
 	assert.Equal(t, stat.GroupByRegexp.String(), exp)
-}
 
-func TestGroupByRegexp(t *testing.T) {
-	stat := NewStat(nil, "request", `^\w+\s+(\S+)`)
 	uri := "/foo/bar"
 	request := "GET " + uri
 	entry := &gonx.Entry{"request": request}
-
-	assert.NoError(t, stat.Add(entry))
-	assert.Equal(t, stat.EntriesParsed, 1)
-
-	item := stat.Get(request)
-	assert.Nil(t, item)
-
-	// Uri should be used as data key because we have regexp to extract it
-	item = stat.Get(uri)
-	assert.NotNil(t, item)
-	assert.Equal(t, item.Name, uri)
-	assert.Equal(t, item.Count, 1)
+	value, err := stat.GetGroupByValue(entry)
+	assert.NoError(t, err)
+	// Uri should be used as group by value because we have
+	// regexp to extract it
+	assert.Equal(t, value, uri)
 }
 
 func TestBadRegexp(t *testing.T) {
@@ -97,24 +93,19 @@ func TestBadRegexp(t *testing.T) {
 	stat := NewStat(nil, "request", `^(\d+)$`)
 	request := "GET /foo/bar"
 	entry := &gonx.Entry{"request": request}
-	assert.Error(t, stat.Add(entry))
+	_, err := stat.GetGroupByValue(entry)
+	assert.Error(t, err)
+	assert.Equal(t, stat.Add(entry), err)
 	assert.Equal(t, stat.EntriesParsed, 0)
 }
 
 func TestNoSubmatchRegexp(t *testing.T) {
-	// Invalid Regexp required request to be numeric field
 	stat := NewStat(nil, "request", `^\w+`)
 	request := "GET /foo/bar"
 	entry := &gonx.Entry{"request": request}
-	assert.NoError(t, stat.Add(entry))
-	assert.Equal(t, stat.EntriesParsed, 1)
-
-	item := stat.Get(request)
-	assert.Nil(t, item)
-
-	// Request method was used for grouping
-	item = stat.Get("GET")
-	assert.NotNil(t, item)
-	assert.Equal(t, item.Name, "GET")
-	assert.Equal(t, item.Count, 1)
+	value, err := stat.GetGroupByValue(entry)
+	assert.NoError(t, err)
+	// The group by regexp does not have submatch pattern, thats
+	// why the whole regexp match (which is `GET`) will be used
+	assert.Equal(t, value, "GET")
 }
