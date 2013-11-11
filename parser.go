@@ -2,6 +2,7 @@ package main
 
 import (
 	"./stat"
+	"encoding/json"
 	"fmt"
 	"github.com/droundy/goopt"
 	"github.com/satyrius/gonx"
@@ -19,6 +20,7 @@ var nginxFormat *string
 var aggField *string
 var groupBy *string
 var groupByReqexp *string
+var jsonOutput *string
 
 func init() {
 	format = goopt.String([]string{"--fmt", "--format"}, "",
@@ -37,6 +39,8 @@ func init() {
 			"set this option to '^\\S+\\s(.*)(?:\\?.*)?$'.")
 	debug = goopt.Flag([]string{"--debug"}, []string{"--no-debug"},
 		"Log debug information", "Do not log debug information")
+	jsonOutput = goopt.String([]string{"-o", "--json"}, "",
+		"Save result as json encoded file")
 }
 
 func badUsage() {
@@ -128,5 +132,19 @@ func main() {
 	sort.Sort(st)
 	for _, item := range st.Data {
 		fmt.Printf("%7.3f %6d %v\n", item.AggValue, item.Count, item.Name)
+	}
+
+	if *jsonOutput != "" {
+		jsonFile, err := os.OpenFile(*jsonOutput, os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			panic(err)
+		}
+		defer jsonFile.Close()
+		jsData, err := json.MarshalIndent(st.Data, "", "  ")
+		if err != nil {
+			panic(err)
+		}
+		jsonFile.Write(jsData)
+		fmt.Printf("Result was saved to JSON encoded file '%v'\n", jsonFile.Name())
 	}
 }
