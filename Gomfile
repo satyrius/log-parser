@@ -1,5 +1,6 @@
 gom 'github.com/satyrius/gonx'
 gom 'github.com/droundy/goopt'
+gom 'github.com/stretchr/testify'
 
 # Developer tools
 gom 'github.com/nsf/gocode'
