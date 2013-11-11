@@ -46,3 +46,7 @@ func (s *Stat) Add(record *gonx.Entry) (err error) {
 	s.EntriesParsed++
 	return
 }
+
+func (s *Stat) AddLog(file string) {
+	s.Logs = append(s.Logs, file)
+}

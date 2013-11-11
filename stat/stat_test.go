@@ -14,6 +14,7 @@ func TestConstructor(t *testing.T) {
 	assert.WithinDuration(t, start, stat.StartedAt, time.Duration(time.Millisecond),
 		"Constructor should setup StartedAt")
 	assert.Equal(t, stat.GroupBy, "request")
+	assert.Empty(t, stat.Logs)
 }
 
 func TestEmptyRegexp(t *testing.T) {
@@ -51,4 +52,11 @@ func TestAddInvalid(t *testing.T) {
 	assert.Error(t, stat.Add(entry))
 	assert.Equal(t, stat.EntriesParsed, 0)
 	assert.Equal(t, len(stat.Data), 0)
+}
+
+func TestAddLog(t *testing.T) {
+	stat := NewStat("request", "")
+	file := "/var/log/nginx/access.log"
+	stat.AddLog(file)
+	assert.Equal(t, stat.Logs, []string{file})
 }
