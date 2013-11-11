@@ -97,7 +97,9 @@ func main() {
 					fmt.Printf("LR $%v = '%v'\n", name, value)
 				}
 			}
-			st.Add(&record)
+			if err := st.Add(&record); err != nil {
+				panic(err)
+			}
 		}
 	}
 	fmt.Printf("Gratz! You've parsed %v log entries, it took %v\n", st.EntriesParsed, st.Stop())
