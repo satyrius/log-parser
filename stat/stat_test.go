@@ -18,7 +18,6 @@ func TestTiming(t *testing.T) {
 	stat := NewStat("request", "")
 	assert.WithinDuration(t, start, stat.StartedAt, time.Duration(time.Millisecond),
 		"Constructor should setup StartedAt")
-	assert.Empty(t, stat.Logs)
 	assert.Equal(t, stat.ElapsedTime, 0)
 	stat.Stop()
 	assert.NotEqual(t, stat.ElapsedTime, 0)
@@ -63,6 +62,7 @@ func TestAddInvalid(t *testing.T) {
 
 func TestAddLog(t *testing.T) {
 	stat := NewStat("request", "")
+	assert.Empty(t, stat.Logs)
 	file := "/var/log/nginx/access.log"
 	stat.AddLog(file)
 	assert.Equal(t, stat.Logs, []string{file})
