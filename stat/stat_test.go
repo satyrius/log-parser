@@ -21,7 +21,7 @@ func TestTiming(t *testing.T) {
 	assert.Equal(t, stat.ElapsedTime, 0)
 	elapsed := stat.Stop()
 	assert.NotEqual(t, stat.ElapsedTime, 0)
-	assert.NotEqual(t, stat.ElapsedTime, elapsed)
+	assert.Equal(t, stat.ElapsedTime, elapsed)
 }
 
 func TestEmptyRegexp(t *testing.T) {
