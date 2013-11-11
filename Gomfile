@@ -1,0 +1,5 @@
+gom 'github.com/satyrius/gonx'
+
+# Developer tools
+gom 'github.com/nsf/gocode'
+gom 'code.google.com/p/rog-go/exp/cmd/godef'
