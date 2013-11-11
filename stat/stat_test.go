@@ -1,6 +1,7 @@
 package stat
 
 import (
+	"github.com/satyrius/gonx"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -24,4 +25,22 @@ func TestRegexp(t *testing.T) {
 	exp := `^\w+\s+(\S+)(?:\?|$)`
 	stat := NewStat("request", exp)
 	assert.Equal(t, stat.GroupByRegexp.String(), exp)
+}
+
+func TestAdd(t *testing.T) {
+	stat := NewStat("request", "")
+	request := "GET /foo/bar"
+	entry := &gonx.Entry{"request": request}
+
+	assert.NoError(t, stat.Add(entry))
+	assert.Equal(t, stat.EntriesParsed, 1)
+	counter, ok := stat.Data[request]
+	assert.True(t, ok)
+	assert.Equal(t, counter, 1)
+
+	assert.NoError(t, stat.Add(entry))
+	assert.Equal(t, stat.EntriesParsed, 2)
+	counter, ok = stat.Data[request]
+	assert.True(t, ok)
+	assert.Equal(t, counter, 2)
 }

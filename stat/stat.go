@@ -26,10 +26,17 @@ func NewStat(groupBy string, regexpPattern string) *Stat {
 		StartedAt:     time.Now(),
 		GroupBy:       groupBy,
 		GroupByRegexp: re,
+		Data:          make(map[string]int),
 	}
 }
 
-func (s *Stat) Add(record gonx.Entry) (err error) {
+func (s *Stat) Add(record *gonx.Entry) (err error) {
 	s.EntriesParsed++
+	value := (*record)[s.GroupBy]
+	if _, ok := s.Data[value]; ok {
+		s.Data[value]++
+	} else {
+		s.Data[value] = 1
+	}
 	return
 }
