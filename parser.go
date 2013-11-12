@@ -20,6 +20,7 @@ var nginxFormat *string
 var aggField *string
 var groupBy *string
 var groupByRegexp *string
+var groupByGeneralize *string
 var jsonOutput *string
 
 func init() {
@@ -37,6 +38,8 @@ func init() {
 		"You can specify regular expression to extract exact data from group by data. "+
 			"For example, you might want to group by a path inside $request, so you should "+
 			"set this option to '^\\S+\\s(.*)(?:\\?.*)?$'.")
+	groupByGeneralize = goopt.String([]string{"--generalize"}, "",
+		"Regular expression to generalize data. For example to make /foo/123 and /foo/234 equal")
 	debug = goopt.Flag([]string{"--debug"}, []string{"--no-debug"},
 		"Log debug information", "Do not log debug information")
 	jsonOutput = goopt.String([]string{"-o", "--json"}, "",
@@ -107,6 +110,9 @@ func main() {
 	var grouper stat.GroupBy
 	if *groupByRegexp != "" {
 		grouper = stat.GroupByRegexp(*groupBy, *groupByRegexp)
+		if *groupByGeneralize != "" {
+			grouper = stat.GroupByGeneralize(grouper, *groupByGeneralize, "*")
+		}
 	} else {
 		grouper = stat.GroupByValue(*groupBy)
 	}

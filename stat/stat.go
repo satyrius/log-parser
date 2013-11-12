@@ -45,11 +45,22 @@ func GroupByRegexp(name string, pattern string) GroupBy {
 		}
 		submatch := re.FindStringSubmatch(value)
 		if submatch == nil {
-			err = fmt.Errorf("Entry's '%v' value '%v' does not match Regexp '%v'",
+			err = fmt.Errorf("Entry's value '%v' does not match Regexp '%v'",
 				value, re)
 			return
 		}
 		value = submatch[len(submatch)-1]
+		return
+	}
+}
+
+func GroupByGeneralize(groupBy GroupBy, regexpPattern string, replace string) GroupBy {
+	re := regexp.MustCompile(regexpPattern)
+	return func(entry *gonx.Entry) (value string, err error) {
+		value, err = groupBy(entry)
+		if err == nil {
+			value = re.ReplaceAllString(value, replace)
+		}
 		return
 	}
 }

@@ -45,3 +45,22 @@ func TestGroupByNoSubmatchRegexp(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, value, "GET")
 }
+
+func TestGroupByGeneralize(t *testing.T) {
+	groupBy := GroupByGeneralize(GroupByValue("request"), `\d+$`, ":id")
+
+	entry := &gonx.Entry{"request": "/foo/bar"}
+	value, err := groupBy(entry)
+	assert.NoError(t, err)
+	assert.Equal(t, value, "/foo/bar")
+
+	entry = &gonx.Entry{"request": "/foo/bar/123"}
+	value, err = groupBy(entry)
+	assert.NoError(t, err)
+	assert.Equal(t, value, "/foo/bar/:id")
+
+	entry = &gonx.Entry{"request": "/foo/bar/456"}
+	value, err = groupBy(entry)
+	assert.NoError(t, err)
+	assert.Equal(t, value, "/foo/bar/:id")
+}
