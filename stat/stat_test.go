@@ -8,14 +8,13 @@ import (
 )
 
 func TestConstructor(t *testing.T) {
-	stat := NewStat(nil, "request", "")
+	stat := NewStat(nil, GroupByValue("request"))
 	assert.Equal(t, stat.EntriesParsed, 0)
-	assert.Equal(t, stat.GroupBy, "request")
 }
 
 func TestTiming(t *testing.T) {
 	start := time.Now()
-	stat := NewStat(nil, "request", "")
+	stat := NewStat(nil, GroupByValue("request"))
 	assert.WithinDuration(t, start, stat.StartedAt, time.Duration(time.Millisecond),
 		"Constructor should setup StartedAt")
 	assert.Equal(t, stat.ElapsedTime, 0)
@@ -25,7 +24,7 @@ func TestTiming(t *testing.T) {
 }
 
 func TestAddLog(t *testing.T) {
-	stat := NewStat(nil, "request", "")
+	stat := NewStat(nil, GroupByValue("request"))
 	assert.Empty(t, stat.Logs)
 	file := "/var/log/nginx/access.log"
 	stat.AddLog(file)
@@ -33,15 +32,9 @@ func TestAddLog(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	stat := NewStat(nil, "request", "")
+	stat := NewStat(nil, GroupByValue("request"))
 	request := "GET /foo/bar"
 	entry := &gonx.Entry{"request": request}
-
-	// Use whole GroupBy variable value, because there is
-	// no GroupByRegexp specified for Stat
-	value, err := stat.GetGroupByValue(entry)
-	assert.NoError(t, err)
-	assert.Equal(t, value, request)
 
 	assert.NoError(t, stat.Add(entry))
 	assert.Equal(t, stat.EntriesParsed, 1)
@@ -61,51 +54,9 @@ func TestAdd(t *testing.T) {
 }
 
 func TestAddInvalid(t *testing.T) {
-	stat := NewStat(nil, "request", "")
+	stat := NewStat(nil, GroupByValue("request"))
 	entry := &gonx.Entry{"foo": "bar"}
 	assert.Error(t, stat.Add(entry))
 	assert.Equal(t, stat.EntriesParsed, 0)
 	assert.Equal(t, stat.Len(), 0)
-}
-
-func TestEmptyRegexp(t *testing.T) {
-	stat := NewStat(nil, "request", "")
-	assert.Nil(t, stat.GroupByRegexp)
-}
-
-func TestRegexp(t *testing.T) {
-	exp := `^\w+\s+(\S+)(?:\?|$)`
-	stat := NewStat(nil, "request", exp)
-	assert.Equal(t, stat.GroupByRegexp.String(), exp)
-
-	uri := "/foo/bar"
-	request := "GET " + uri
-	entry := &gonx.Entry{"request": request}
-	value, err := stat.GetGroupByValue(entry)
-	assert.NoError(t, err)
-	// Uri should be used as group by value because we have
-	// regexp to extract it
-	assert.Equal(t, value, uri)
-}
-
-func TestBadRegexp(t *testing.T) {
-	// Invalid Regexp required request to be numeric field
-	stat := NewStat(nil, "request", `^(\d+)$`)
-	request := "GET /foo/bar"
-	entry := &gonx.Entry{"request": request}
-	_, err := stat.GetGroupByValue(entry)
-	assert.Error(t, err)
-	assert.Equal(t, stat.Add(entry), err)
-	assert.Equal(t, stat.EntriesParsed, 0)
-}
-
-func TestNoSubmatchRegexp(t *testing.T) {
-	stat := NewStat(nil, "request", `^\w+`)
-	request := "GET /foo/bar"
-	entry := &gonx.Entry{"request": request}
-	value, err := stat.GetGroupByValue(entry)
-	assert.NoError(t, err)
-	// The group by regexp does not have submatch pattern, thats
-	// why the whole regexp match (which is `GET`) will be used
-	assert.Equal(t, value, "GET")
 }

@@ -19,7 +19,7 @@ var nginxConfig *string
 var nginxFormat *string
 var aggField *string
 var groupBy *string
-var groupByReqexp *string
+var groupByRegexp *string
 var jsonOutput *string
 
 func init() {
@@ -33,7 +33,7 @@ func init() {
 		"Nginx access log variable to aggregate")
 	groupBy = goopt.String([]string{"-g", "--group-by"}, "request",
 		"Nginx access log variable to group by")
-	groupByReqexp = goopt.String([]string{"-r", "--regexp"}, "",
+	groupByRegexp = goopt.String([]string{"-r", "--regexp"}, "",
 		"You can specify regular expression to extract exact data from group by data. "+
 			"For example, you might want to group by a path inside $request, so you should "+
 			"set this option to '^\\S+\\s(.*)(?:\\?.*)?$'.")
@@ -68,6 +68,7 @@ func getReader(file io.Reader) (reader *gonx.Reader, err error) {
 func main() {
 	goopt.Parse(nil)
 
+	// Determine what to parse
 	var logs []*os.File
 	if len(goopt.Args) != 0 {
 		fmt.Println("We are going to parse those files:")
@@ -86,6 +87,7 @@ func main() {
 		logs = append(logs, os.Stdin)
 	}
 
+	// Setup stat aggregator
 	aggregator := func(i *stat.Item, entry *gonx.Entry) (val float64, err error) {
 		if strVal, ok := (*entry)[*aggField]; ok {
 			v, err := strconv.ParseFloat(strVal, 64)
@@ -102,8 +104,15 @@ func main() {
 		}
 		return
 	}
-	st := stat.NewStat(aggregator, *groupBy, *groupByReqexp)
+	var grouper stat.GroupBy
+	if *groupByRegexp != "" {
+		grouper = stat.GroupByRegexp(*groupBy, *groupByRegexp, "")
+	} else {
+		grouper = stat.GroupByValue(*groupBy)
+	}
+	st := stat.NewStat(aggregator, grouper)
 
+	// Go parsing
 	for _, file := range logs {
 		st.AddLog(file.Name())
 		reader, err := getReader(file)
@@ -134,6 +143,7 @@ func main() {
 		fmt.Printf("%7.3f %6d %v\n", item.AggValue, item.Count, item.Name)
 	}
 
+	// Outpt result in JSON
 	if *jsonOutput != "" {
 		jsonFile, err := os.OpenFile(*jsonOutput, os.O_WRONLY|os.O_CREATE, 0644)
 		if err != nil {
