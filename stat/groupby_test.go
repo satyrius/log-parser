@@ -17,7 +17,7 @@ func TestGroupByValue(t *testing.T) {
 }
 
 func TestGroupByRegexp(t *testing.T) {
-	groupBy := GroupByRegexp("request", `^\w+\s+(\S+)(?:\?|$)`, "")
+	groupBy := GroupByRegexp("request", `^\w+\s+(\S+)(?:\?|$)`)
 
 	request := "GET /foo/bar"
 	entry := &gonx.Entry{"request": request}
@@ -27,7 +27,7 @@ func TestGroupByRegexp(t *testing.T) {
 }
 
 func TestGroupByBadRegexp(t *testing.T) {
-	groupBy := GroupByRegexp("request", `^(\d+)$`, "")
+	groupBy := GroupByRegexp("request", `^(\d+)$`)
 
 	request := "GET /foo/bar"
 	entry := &gonx.Entry{"request": request}
@@ -38,7 +38,7 @@ func TestGroupByBadRegexp(t *testing.T) {
 }
 
 func TestGroupByNoSubmatchRegexp(t *testing.T) {
-	groupBy := GroupByRegexp("request", `^\w+`, "")
+	groupBy := GroupByRegexp("request", `^\w+`)
 	request := "GET /foo/bar"
 	entry := &gonx.Entry{"request": request}
 	value, err := groupBy(entry)

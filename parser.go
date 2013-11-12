@@ -106,7 +106,7 @@ func main() {
 	}
 	var grouper stat.GroupBy
 	if *groupByRegexp != "" {
-		grouper = stat.GroupByRegexp(*groupBy, *groupByRegexp, "")
+		grouper = stat.GroupByRegexp(*groupBy, *groupByRegexp)
 	} else {
 		grouper = stat.GroupByValue(*groupBy)
 	}

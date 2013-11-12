@@ -36,7 +36,7 @@ func GroupByValue(name string) GroupBy {
 	}
 }
 
-func GroupByRegexp(name string, pattern string, replace string) GroupBy {
+func GroupByRegexp(name string, pattern string) GroupBy {
 	re := regexp.MustCompile(pattern)
 	return func(entry *gonx.Entry) (value string, err error) {
 		value, err = entry.Get(name)
